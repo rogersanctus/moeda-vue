@@ -5,11 +5,13 @@
     "moduleResolution": "node",
     "strict": true,
     "jsx": "preserve",
+    "importHelpers": true,
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "lib": ["esnext", "dom"],
+    "lib": ["esnext", "dom", "DOM.Iterable", "ScriptHost"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
@@ -21,5 +23,6 @@
       }
     ]
   },  
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "exclude": ["node_modules"]
 }
