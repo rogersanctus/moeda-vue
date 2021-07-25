@@ -3,13 +3,21 @@
     <div v-if="loading">Carregando...</div>
     <div class="top">
       <span>Cambio dos últimos 30 dias:</span>
-      <div style="display: flex; align-items: center;">
-        <label for="cmp_currency" style="white-space: nowrap; margin-right: 15px;">Comparar com:</label>
-        <Autocomplete v-model="currency" :items="currencySymbols" :description="'description'"/>
+      <div style="display: flex; align-items: center">
+        <label
+          for="cmp_currency"
+          style="white-space: nowrap; margin-right: 15px"
+          >Comparar com:</label
+        >
+        <Autocomplete
+          v-model="currency"
+          :items="currencySymbols"
+          :description="'description'"
+        />
       </div>
       <button style="margin-left: auto" @click="updateSeries">Update</button>
     </div>
-    <ExchangeRateChart :data="dataSeries" :options="chartOptions"/>
+    <ExchangeRateChart :data="dataSeries" :options="chartOptions" />
     <!-- Chart -->
     <footer class="footer">RODAPÉ</footer>
   </div>
@@ -43,7 +51,7 @@ export default defineComponent({
       datasets: [
         {
           label: 'Dindin',
-          data: data.value,
+          data: data.value
         }
       ]
     }))
@@ -60,14 +68,16 @@ export default defineComponent({
 
     loading.value = true
     fetchSymbols()
-    .then((resp) => {
-      if(resp.success) {
-        currencySymbols.value = Object.keys(resp.symbols).map((key) => resp.symbols[key])
-        currency.value = resp.symbols['USD']
-      }
-    })
-    .catch((error) => console.error(error))
-    .finally(() => loading.value = false)
+      .then((resp) => {
+        if (resp.success) {
+          currencySymbols.value = Object.keys(resp.symbols).map(
+            (key) => resp.symbols[key]
+          )
+          currency.value = resp.symbols['USD']
+        }
+      })
+      .catch((error) => console.error(error))
+      .finally(() => (loading.value = false))
 
     return {
       loading,
@@ -77,7 +87,7 @@ export default defineComponent({
       currency,
       updateSeries
     }
-  },
+  }
 })
 </script>
 <style lang="scss" scoped>
@@ -90,7 +100,6 @@ export default defineComponent({
     display: flex;
     padding: 15px;
     padding-right: 300px;
-
     align-items: center;
     justify-content: space-between;
   }

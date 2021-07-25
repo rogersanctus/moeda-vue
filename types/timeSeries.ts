@@ -5,7 +5,7 @@ export interface RateKeyed {
 }
 
 interface SuccessResponse {
-  success: boolean;
+  success: boolean
 }
 
 export interface TimeSeries extends SuccessResponse {
@@ -30,6 +30,6 @@ export function voidTimeSeries(): TimeSeries {
     base: 'USD',
     rates: {},
     success: false,
-    timeseries: true,
+    timeseries: true
   }
 }
