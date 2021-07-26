@@ -21,7 +21,12 @@ import {
   LineElement,
   PointElement,
   CategoryScale,
-  LinearScale
+  LinearScale,
+  Decimation,
+  Legend,
+  Title,
+  Tooltip,
+  Filler
 } from 'chart.js'
 
 Chart.register([
@@ -29,7 +34,12 @@ Chart.register([
   LineElement,
   PointElement,
   CategoryScale,
-  LinearScale
+  LinearScale,
+  Decimation,
+  Legend,
+  Title,
+  Tooltip,
+  Filler
 ])
 
 export default defineComponent({
@@ -46,17 +56,24 @@ export default defineComponent({
     }
   },
 
-  setup(props) {
+  emits: ['chartCreated'],
+
+  setup(props, context) {
     const chartCanvas = ref<HTMLCanvasElement | null>(null)
     let chart: Chart<'line'> | null = null
 
     function render() {
       if (chartCanvas.value) {
-        chart = new Chart<'line'>(chartCanvas.value, {
-          type: 'line',
-          data: props.data,
-          options: props.options
-        })
+        try {
+          chart = new Chart<'line'>(chartCanvas.value, {
+            type: 'line',
+            data: props.data,
+            options: props.options
+          })
+          context.emit('chartCreated', chart)
+        } catch (error) {
+          console.error(error)
+        }
       }
     }
 
