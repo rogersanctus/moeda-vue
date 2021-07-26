@@ -313,7 +313,6 @@ export default defineComponent({
     }
 
     function onKeyDown(event: KeyboardEvent) {
-      console.log(event)
       if (event.code === 'ArrowDown') {
         if (!open.value) {
           open.value = true
