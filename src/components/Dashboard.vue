@@ -12,23 +12,27 @@
         <Autocomplete
           v-model="currency"
           :items="currencySymbols"
-          :description="'description'"
+          code="code"
+          description="description"
         />
       </div>
-      <button style="margin-left: auto" @click="updateSeries">Update</button>
     </div>
-    <ExchangeRateChart :data="dataSeries" :options="chartOptions" />
+    <ExchangeRateChart
+      :data="dataSeries"
+      :options="chartOptions"
+      @chartCreated="onChartCreated"
+    />
     <!-- Chart -->
     <footer class="footer">RODAPÉ</footer>
   </div>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref } from 'vue'
+import { computed, defineComponent, ref, watch } from 'vue'
 import ExchangeRateChart from '@/components/ExchangeRateChart.vue'
-import { ChartData, ChartOptions } from 'chart.js'
+import { Chart, ChartData, ChartOptions } from 'chart.js'
 import { CurrencySymbol } from '@t/timeSeries'
-import { fetchSymbols } from '@/services/exchangeRateService'
+import { fetchSeries, fetchSymbols } from '@/services/exchangeRateService'
 import Autocomplete from './Autocomplete.vue'
 
 export default defineComponent({
@@ -46,24 +50,80 @@ export default defineComponent({
     const currencySymbols = ref<Array<CurrencySymbol>>([])
     const currency = ref<CurrencySymbol | null>(null)
 
+    const gradient = ref<CanvasGradient | string>('#abf7cc')
+    const borderColor = ref<string>('#ffaf00')
+
     const dataSeries = computed<ChartData<'line'>>(() => ({
       labels: labels.value,
       datasets: [
         {
-          label: 'Dindin',
-          data: data.value
+          label: 'BRL',
+          data: data.value,
+          borderColor: borderColor.value,
+          backgroundColor: gradient.value,
+          fill: 'start'
         }
       ]
     }))
 
     const chartOptions: ChartOptions<'line'> = {
       responsive: true,
-      maintainAspectRatio: false
+      maintainAspectRatio: false,
+      plugins: {
+        filler: {
+          propagate: true
+        },
+        decimation: {
+          enabled: true
+        }
+      },
+      interaction: {
+        intersect: true,
+        axis: 'y',
+        mode: 'nearest'
+      }
     }
 
-    function updateSeries() {
-      labels.value = ['A', 'B', 'C']
-      data.value = [1, 2, 3]
+    watch(currency, async (value, old) => {
+      if (value && value.code !== old?.code) {
+        const toDate = new Date()
+        const fromDate = new Date(toDate.valueOf())
+        fromDate.setDate(toDate.getDate() - 30)
+
+        try {
+          loading.value = true
+          const timeseries = await fetchSeries(
+            fromDate,
+            toDate,
+            value?.code,
+            'BRL'
+          )
+
+          const labelKeys = Object.keys(timeseries.rates)
+          labels.value = labelKeys.map((key) =>
+            new Date(key + 'T00:00:00').toLocaleDateString()
+          )
+          data.value = labelKeys.map((key) => timeseries.rates[key]['BRL'] || 0)
+        } catch (error) {
+          console.error('Error while trying to load exchange rate.', error)
+        } finally {
+          loading.value = false
+        }
+      }
+    })
+
+    function onChartCreated(chart: Chart<'line'>) {
+      const grad = chart.ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        chart.chartArea.height
+      )
+      grad.addColorStop(0, '#50f00080')
+      grad.addColorStop(0.5, '#7ccf5580')
+      grad.addColorStop(0.75, '#ffffff50')
+      grad.addColorStop(1, '#ffffff40')
+      gradient.value = grad
     }
 
     loading.value = true
@@ -85,7 +145,7 @@ export default defineComponent({
       chartOptions,
       currencySymbols,
       currency,
-      updateSeries
+      onChartCreated
     }
   }
 })
