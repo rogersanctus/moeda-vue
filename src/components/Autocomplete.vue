@@ -3,7 +3,6 @@
     ref="autocompleteEl"
     class="autocomplete"
     tabindex="0"
-    @focus="onFocusAutocomplete"
     @blur="onLoseFocusAutocomplete"
     @click="onClickAutocomplete"
     @keydown="onKeyDown"
@@ -13,10 +12,10 @@
     <div v-if="open" class="list-box">
       <div class="search-box">
         <input
+          v-model="searchTerm"
           type="text"
           name="search"
           placeholder="Search"
-          autofocus
           @focus="onSearchFocus"
           @blur="onSearchLoseFocus"
         />
@@ -24,7 +23,7 @@
       <div ref="listItemsEl" class="list-items">
         <ul>
           <li
-            v-for="(item, i) in items"
+            v-for="(item, i) in filtered"
             :key="i"
             :class="{ selected: selected && i === selected.index }"
             @mouseenter="onMouseEnterItem(item, i)"
@@ -32,7 +31,7 @@
           >
             <span>
               {{
-                typeof items === 'object' && description && description in item
+                typeof item === 'object' && description
                   ? item[description]
                   : item
               }}
@@ -47,22 +46,22 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, PropType, ref, watch } from 'vue'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-empty-function */
+type ItemPrimitiveType = string | number
+type ItemType = ItemPrimitiveType | Record<string, ItemPrimitiveType>
 
 interface SelectableItem {
   index: number
-  item: any
+  item: ItemType
 }
 
 export default defineComponent({
   props: {
     items: {
-      type: Array as PropType<any[]>,
+      type: Array as PropType<ItemType[]>,
       required: true
     },
     modelValue: {
-      type: Object as PropType<unknown>,
+      type: Object as PropType<ItemPrimitiveType>,
       required: true
     },
     code: {
@@ -90,11 +89,15 @@ export default defineComponent({
     const listItemsEl = ref<HTMLElement | null>(null)
     const open = ref<boolean>(false)
     let selected = ref<SelectableItem | null>(null)
+    const searchTerm = ref<string>('')
+    const filtered = ref<Array<ItemType>>([])
 
-    function strOfItem(item: any): string {
-      return props.description && typeof item === 'object'
-        ? item[props.description]
-        : item
+    function strOfItem(item: ItemType): string {
+      if (typeof item === 'object' && props.description) {
+        return String(item[props.description])
+      }
+
+      return String(item)
     }
 
     const selectedText = computed<string>(() => {
@@ -106,11 +109,11 @@ export default defineComponent({
     })
 
     const greaterItem = computed<string>(() => {
-      function itemLength(item: any): number {
+      function itemLength(item: ItemType): number {
         if (typeof item === 'object' && props.description) {
-          return item[props.description].toString().length
+          return String(item[props.description]).length
         }
-        return item.toString().length
+        return String(item).length
       }
 
       const items = props.items
@@ -128,24 +131,41 @@ export default defineComponent({
     })
 
     watch(
-      () => props.modelValue,
-      (value: any) => {
-        const index = props.items.findIndex((item) => {
-          const idKey = props.code || props.description
-          if (typeof item === 'object' && idKey && value) {
-            return item[idKey] === value[idKey]
-          }
-        })
-
-        if (index !== -1) {
-          selected.value = { item: value, index }
-        }
+      () => props.items,
+      (value) => {
+        filtered.value = filter(value)
       }
     )
 
     watch(listItemsEl, (value) => {
       if (value && open.value) {
+        const idKey = props.code || props.description
+
+        const index = filtered.value.findIndex((item) => {
+          if (
+            typeof item === 'object' &&
+            idKey &&
+            props.modelValue &&
+            typeof props.modelValue === 'object'
+          ) {
+            const modelValue = props.modelValue
+            return item[idKey] === modelValue[idKey]
+          }
+
+          return item === props.modelValue
+        })
+
+        if (index !== -1) {
+          selected.value = { item: props.modelValue, index }
+        }
+
         scrollToCurrent()
+      }
+    })
+
+    watch(searchTerm, (value, old) => {
+      if (value !== old) {
+        filtered.value = filter(props.items)
       }
     })
 
@@ -158,14 +178,39 @@ export default defineComponent({
       }
     })
 
-    function onSelect(item: any, index: number) {
+    function filter(list: Array<ItemType>): Array<ItemType> {
+      const search = searchTerm.value.trim().toLowerCase()
+
+      if (!search) {
+        return [...props.items]
+      }
+
+      return list.filter((item) => {
+        if (typeof item !== 'object') {
+          return item.toString().toLowerCase().includes(search)
+        }
+
+        let description = '',
+          code = ''
+
+        if (props.description) {
+          description = item[props.description].toString().toLowerCase()
+        }
+
+        if (props.code) {
+          code = item[props.code].toString().toLowerCase()
+        }
+
+        return description.includes(search) || code.includes(search)
+      })
+    }
+
+    function onSelect(item: ItemType, index: number) {
       selected.value = { item, index }
       open.value = false
       autocompleteEl.value && autocompleteEl.value.blur()
       context.emit('update:modelValue', item)
     }
-
-    function onFocusAutocomplete() {}
 
     function onLoseFocusAutocomplete(event: FocusEvent) {
       if (
@@ -192,22 +237,39 @@ export default defineComponent({
       open.value = !open.value
     }
 
-    function onSearchFocus() {}
+    function onSearchFocus({ target }: InputEvent) {
+      const input = target as HTMLInputElement | null
 
-    function onSearchLoseFocus() {
+      if (input) {
+        input.select()
+      }
+    }
+
+    function onSearchLoseFocus(event: MouseEvent) {
+      if (
+        event.relatedTarget &&
+        autocompleteEl.value?.contains(event.relatedTarget as Node)
+      ) {
+        return
+      }
       open.value = false
     }
 
     function scrollToCurrent() {
       if (selected.value && listItemsEl.value) {
         const listItems = listItemsEl.value
-        const currentEl = listItems.querySelector('ul>li.selected')
+        const liList = listItems.querySelectorAll('ul>li')
         const currentIndex = selected.value.index
+
+        let currentEl = Array.prototype.find.call(
+          liList,
+          (li) => li.__vnode.key === currentIndex
+        )
 
         if (currentEl) {
           if (currentIndex === 0) {
             listItems.scrollTop = 0
-          } else if (currentIndex === props.items.length - 1) {
+          } else if (currentIndex === filtered.value.length - 1) {
             listItems.scrollTop =
               listItems.scrollHeight - currentEl.clientHeight
           } else {
@@ -232,18 +294,18 @@ export default defineComponent({
         currentIndex--
 
         if (currentIndex < 0) {
-          currentIndex = props.items.length - 1
+          currentIndex = filtered.value.length - 1
         }
       } else if (direction === 'down') {
         currentIndex++
 
-        if (currentIndex > props.items.length - 1) {
+        if (currentIndex > filtered.value.length - 1) {
           currentIndex = 0
         }
       }
 
       selected.value = {
-        item: props.items[currentIndex],
+        item: filtered.value[currentIndex],
         index: currentIndex
       }
 
@@ -269,7 +331,7 @@ export default defineComponent({
       }
     }
 
-    function onMouseEnterItem(item: any, index: number) {
+    function onMouseEnterItem(item: ItemType, index: number) {
       selected.value = { item, index }
     }
 
@@ -287,8 +349,9 @@ export default defineComponent({
       greaterItem,
       selected,
       selectedText,
+      filtered,
+      searchTerm,
       focus,
-      onFocusAutocomplete,
       onLoseFocusAutocomplete,
       onClickAutocomplete,
       onSelect,
