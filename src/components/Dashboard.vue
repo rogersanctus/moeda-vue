@@ -75,6 +75,20 @@ export default defineComponent({
         },
         decimation: {
           enabled: true
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const currencyValue = context.parsed.y
+              const digits = currency.value?.code === 'USD' ? 2 : undefined
+
+              return Intl.NumberFormat(undefined, {
+                style: 'decimal',
+                minimumFractionDigits: digits,
+                maximumFractionDigits: digits
+              }).format(currencyValue)
+            }
+          }
         }
       },
       interaction: {
