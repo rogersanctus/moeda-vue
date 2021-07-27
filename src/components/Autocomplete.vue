@@ -377,6 +377,7 @@ export default defineComponent({
     align-items: center;
     cursor: pointer;
     user-select: none;
+    box-shadow: var(--box-shadow-3);
 
     &::after {
       content: '';
@@ -391,7 +392,7 @@ export default defineComponent({
   &:focus .selected-box {
     outline: none;
     border-color: var(--active-color);
-    box-shadow: var(--box-shadow-3);
+    box-shadow: var(--box-shadow-active-3);
   }
 
   .ghost-item {
