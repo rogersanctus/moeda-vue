@@ -101,12 +101,6 @@ export default defineComponent({
       position: relative;
       width: 14px;
       height: 56px;
-      //border: solid 1px blue;
-      //border-right: none;
-
-      &:last-child {
-        //border-right: solid 1px blue;
-      }
 
       .brick {
         visibility: hidden;
@@ -124,10 +118,6 @@ export default defineComponent({
         bottom: 0 !important;
         background: #000;
         animation: buildingWall 4s step-end infinite;
-      }
-
-      div {
-        //border: solid 1px #0ff;
       }
 
       &:nth-child(1) .wall,
