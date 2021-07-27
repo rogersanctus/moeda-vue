@@ -7,8 +7,9 @@
 :root {
   --select-padding-x: 0.75rem;
   --select-padding-y: 0.5rem;
-  --box-shadow-3: 0 0 0 3px #0778f780;
-  --dark-color: #555;
+  --box-shadow-3: 0 0 5px 3px #00000030;
+  --box-shadow-active-3: 0 0 0 3px #0778f780;
+  --dark-color: #888;
   --light-color: #e5e5e5;
   --dark2-color: #999;
   --active-color: #0778f7;
@@ -17,7 +18,7 @@
 
 button {
   &:focus-visible {
-    box-shadow: var(--box-shadow-3);
+    box-shadow: var(--box-shadow-active-3);
     outline: none;
   }
 }
@@ -29,10 +30,11 @@ input {
   border-radius: var(--border-radius);
   padding: var(--select-padding-y) var(--select-padding-x);
   width: 100%;
+  box-shadow: var(--box-shadow-3);
 
   &:focus {
     border-color: var(--active-color);
-    box-shadow: var(--box-shadow-3);
+    box-shadow: var(--box-shadow-active-3);
   }
 }
 
@@ -57,7 +59,7 @@ select {
     right: -1px;
     bottom: -1px;
     border: solid 1px #0778f7;
-    box-shadow: var(--box-shadow-3);
+    box-shadow: var(--box-shadow-active-3);
     border-radius: inherit;
     background-color: transparent;
     pointer-events: none;
