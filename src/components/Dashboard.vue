@@ -1,29 +1,41 @@
 <template>
   <div class="view">
-    <div v-if="loading">Carregando...</div>
-    <div class="top">
-      <span>Cambio dos últimos 30 dias:</span>
-      <div style="display: flex; align-items: center">
-        <label
-          for="cmp_currency"
-          style="white-space: nowrap; margin-right: 15px"
-          >Comparar com:</label
-        >
-        <Autocomplete
-          v-model="currency"
-          :items="currencySymbols"
-          code="code"
-          description="description"
+    <LoadingOverlay :loading="loading" />
+    <header>
+      <h3>Cambio dos últimos 30 dias</h3>
+    </header>
+    <div class="content">
+      <div class="options">
+        <div class="input-group">
+          <label for="cmp_currency">Converter</label>
+          <Autocomplete
+            v-model="currency"
+            :items="currencySymbols"
+            code="code"
+            description="description"
+          />
+        </div>
+        <div class="input-group">
+          <label for="base_currency">Para</label>
+          <Autocomplete
+            v-model="currencyBaseSymbol"
+            :items="currencySymbols"
+            code="code"
+            description="description"
+            disabled
+          />
+        </div>
+      </div>
+      <div class="chart-wrapper">
+        <ExchangeRateChart
+          class="chart"
+          :data="dataSeries"
+          :options="chartOptions"
+          @chartCreated="onChartCreated"
         />
       </div>
     </div>
-    <ExchangeRateChart
-      :data="dataSeries"
-      :options="chartOptions"
-      @chartCreated="onChartCreated"
-    />
-    <!-- Chart -->
-    <footer class="footer">RODAPÉ</footer>
+    <footer class="footer"></footer>
   </div>
 </template>
 
@@ -33,12 +45,14 @@ import ExchangeRateChart from '@/components/ExchangeRateChart.vue'
 import { Chart, ChartData, ChartOptions } from 'chart.js'
 import { CurrencySymbol } from '@t/timeSeries'
 import { fetchSeries, fetchSymbols } from '@/services/exchangeRateService'
+import LoadingOverlay from './LoadingOverlay.vue'
 import Autocomplete from './Autocomplete.vue'
 
 export default defineComponent({
   name: 'Dashboard',
 
   components: {
+    LoadingOverlay,
     ExchangeRateChart,
     Autocomplete
   },
@@ -48,6 +62,8 @@ export default defineComponent({
     const labels = ref<Array<string>>([])
     const data = ref<Array<number>>([])
     const currencySymbols = ref<Array<CurrencySymbol>>([])
+    const currencyBaseFallback = 'BRL'
+    const currencyBaseSymbol = ref<CurrencySymbol | null>(null)
     const currency = ref<CurrencySymbol | null>(null)
 
     const gradient = ref<CanvasGradient | string>('#abf7cc')
@@ -57,7 +73,7 @@ export default defineComponent({
       labels: labels.value,
       datasets: [
         {
-          label: 'BRL',
+          label: currencyBase.value,
           data: data.value,
           borderColor: borderColor.value,
           backgroundColor: gradient.value,
@@ -65,6 +81,10 @@ export default defineComponent({
         }
       ]
     }))
+
+    const currencyBase = computed<string>(
+      () => currencyBaseSymbol.value?.code || currencyBaseFallback
+    )
 
     const chartOptions: ChartOptions<'line'> = {
       responsive: true,
@@ -100,31 +120,43 @@ export default defineComponent({
 
     watch(currency, async (value, old) => {
       if (value && value.code !== old?.code) {
-        const toDate = new Date()
-        const fromDate = new Date(toDate.valueOf())
-        fromDate.setDate(toDate.getDate() - 30)
-
-        try {
-          loading.value = true
-          const timeseries = await fetchSeries(
-            fromDate,
-            toDate,
-            value?.code,
-            'BRL'
-          )
-
-          const labelKeys = Object.keys(timeseries.rates)
-          labels.value = labelKeys.map((key) =>
-            new Date(key + 'T00:00:00').toLocaleDateString()
-          )
-          data.value = labelKeys.map((key) => timeseries.rates[key]['BRL'] || 0)
-        } catch (error) {
-          console.error('Error while trying to load exchange rate.', error)
-        } finally {
-          loading.value = false
-        }
+        doFetchSeries()
       }
     })
+
+    watch(currencyBaseSymbol, (value, old) => {
+      if (value && value.code !== old?.code) {
+        doFetchSeries()
+      }
+    })
+
+    async function doFetchSeries() {
+      const toDate = new Date()
+      const fromDate = new Date(toDate.valueOf())
+      fromDate.setDate(toDate.getDate() - 30)
+
+      try {
+        loading.value = true
+        const timeseries = await fetchSeries(
+          fromDate,
+          toDate,
+          currency.value?.code || 'USD',
+          currencyBase.value
+        )
+
+        const labelKeys = Object.keys(timeseries.rates)
+        labels.value = labelKeys.map((key) =>
+          new Date(key + 'T00:00:00').toLocaleDateString()
+        )
+        data.value = labelKeys.map(
+          (key) => timeseries.rates[key][currencyBase.value] || 0
+        )
+      } catch (error) {
+        console.error('Error while trying to load exchange rate.', error)
+      } finally {
+        loading.value = false
+      }
+    }
 
     function onChartCreated(chart: Chart<'line'>) {
       const grad = chart.ctx.createLinearGradient(
@@ -140,6 +172,10 @@ export default defineComponent({
       gradient.value = grad
     }
 
+    function onCurrencyBase(modelValue: CurrencySymbol) {
+      currencyBaseSymbol.value = modelValue
+    }
+
     loading.value = true
     fetchSymbols()
       .then((resp) => {
@@ -147,6 +183,8 @@ export default defineComponent({
           currencySymbols.value = Object.keys(resp.symbols).map(
             (key) => resp.symbols[key]
           )
+
+          currencyBaseSymbol.value = resp.symbols[currencyBaseFallback]
           currency.value = resp.symbols['USD']
         }
       })
@@ -158,8 +196,10 @@ export default defineComponent({
       dataSeries,
       chartOptions,
       currencySymbols,
+      currencyBaseSymbol,
       currency,
-      onChartCreated
+      onChartCreated,
+      onCurrencyBase
     }
   }
 })
@@ -169,17 +209,70 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
 
-  .top {
+  header {
     display: flex;
+    flex-direction: column;
     padding: 15px;
-    padding-right: 300px;
     align-items: center;
     justify-content: space-between;
+    background-image: linear-gradient(#1a4b2040, #fff);
+  }
+
+  .content {
+    display: flex;
+    height: 100%;
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0.5rem;
+      min-width: 330px;
+    }
+
+    .input-group {
+      width: 100%;
+      margin-bottom: 15px;
+      min-width: 100%;
+
+      label {
+        display: block;
+        white-space: nowrap;
+        margin-bottom: 0.4rem;
+      }
+
+      input {
+        width: 100%;
+      }
+    }
+
+    .chart-wrapper {
+      width: 100%;
+      height: 100%;
+    }
   }
 
   footer {
-    margin-top: auto;
+    height: 40px;
+    min-height: 40px;
+    width: 100%;
+    background-image: linear-gradient(#fff, #1a4b2040);
+  }
+}
+
+@media (max-width: 800px) {
+  header {
+    h3 {
+      margin: 0;
+    }
+  }
+
+  .content {
+    flex-direction: column;
+    overflow-y: auto;
   }
 }
 </style>
+
