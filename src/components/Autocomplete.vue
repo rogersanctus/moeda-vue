@@ -9,7 +9,7 @@
   >
     <div class="selected-box">{{ selectedText }}</div>
     <div ref="ghostEl" class="ghost-item">{{ greaterItem }}</div>
-    <div v-if="open" class="list-box">
+    <div v-if="open" ref="listEl" class="list-box">
       <div class="search-box">
         <input
           v-model="searchTerm"
@@ -86,6 +86,7 @@ export default defineComponent({
   setup(props, context) {
     const autocompleteEl = ref<HTMLElement | null>(null)
     const ghostEl = ref<HTMLElement | null>(null)
+    const listEl = ref<HTMLElement | null>(null)
     const listItemsEl = ref<HTMLElement | null>(null)
     const open = ref<boolean>(false)
     let selected = ref<SelectableItem | null>(null)
@@ -159,6 +160,7 @@ export default defineComponent({
           selected.value = { item: props.modelValue, index }
         }
 
+        listEl.value && positionTheList(listEl.value)
         scrollToCurrent()
       }
     })
@@ -255,6 +257,36 @@ export default defineComponent({
       open.value = false
     }
 
+    function positionTheList(list: HTMLElement) {
+      const rect = list.getClientRects()[0]
+
+      if (rect) {
+        const padding = 15
+        const parentHeight = list.parentElement?.clientHeight || 0
+        const topSpace = rect.y - parentHeight - padding
+        const bottomSpace = document.body.clientHeight - rect.y - padding
+
+        // no need to resize/reposition
+        if (list.clientHeight <= bottomSpace) {
+          return
+        }
+
+        const marginTop = Number(
+          getComputedStyle(list).marginTop.split('px')[0]
+        )
+
+        if (topSpace <= bottomSpace) {
+          list.style.top = parentHeight + 'px'
+          list.style.maxHeight = bottomSpace + 'px'
+        } else {
+          list.style.bottom = parentHeight + 'px'
+          list.style.marginBottom = marginTop + 'px'
+          list.style.marginTop = 0 + 'px'
+          list.style.height = topSpace + 'px'
+        }
+      }
+    }
+
     function scrollToCurrent() {
       if (selected.value && listItemsEl.value) {
         const listItems = listItemsEl.value
@@ -344,6 +376,7 @@ export default defineComponent({
       open,
       autocompleteEl,
       ghostEl,
+      listEl,
       listItemsEl,
       greaterItem,
       selected,
