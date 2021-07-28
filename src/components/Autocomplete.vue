@@ -2,7 +2,9 @@
   <div
     ref="autocompleteEl"
     class="autocomplete"
-    tabindex="0"
+    :class="{ disabled }"
+    :tabindex="disabled ? -1 : 0"
+    @focus="onFocusAutocomplete"
     @blur="onLoseFocusAutocomplete"
     @click="onClickAutocomplete"
     @keydown="onKeyDown"
@@ -78,6 +80,11 @@ export default defineComponent({
       type: String,
       required: false,
       default: () => null
+    },
+    disabled: {
+      type: Boolean,
+      required: false,
+      default: () => false
     }
   },
 
@@ -214,6 +221,12 @@ export default defineComponent({
       context.emit('update:modelValue', item)
     }
 
+    function onFocusAutocomplete() {
+      if (autocompleteEl.value && props.disabled) {
+        autocompleteEl.value.blur()
+      }
+    }
+
     function onLoseFocusAutocomplete(event: FocusEvent) {
       if (
         event.relatedTarget &&
@@ -227,6 +240,7 @@ export default defineComponent({
 
     function onClickAutocomplete(e: Event) {
       if (
+        props.disabled ||
         e
           .composedPath()
           .find((target) =>
@@ -384,6 +398,7 @@ export default defineComponent({
       filtered,
       searchTerm,
       focus,
+      onFocusAutocomplete,
       onLoseFocusAutocomplete,
       onClickAutocomplete,
       onSelect,
@@ -419,6 +434,18 @@ export default defineComponent({
       height: 0.6em;
       margin-left: auto;
       clip-path: polygon(0 0, 100% 0, 50% 100%);
+    }
+  }
+
+  &.disabled .selected-box {
+    background: #ddd;
+    border-color: #bbb;
+    color: #999;
+    box-shadow: 0 0 5px 3px #00000020;
+    cursor: not-allowed;
+
+    &::after {
+      opacity: 0.4;
     }
   }
 
