@@ -63,8 +63,8 @@ export default defineComponent({
       required: true
     },
     modelValue: {
-      type: Object as PropType<ItemPrimitiveType>,
-      required: true
+      type: Object as PropType<ItemType | null>,
+      default: () => null
     },
     code: {
       type: String,
@@ -148,23 +148,25 @@ export default defineComponent({
     watch(listItemsEl, (value) => {
       if (value && open.value) {
         const idKey = props.code || props.description
+        const model = props.modelValue
 
-        const index = filtered.value.findIndex((item) => {
-          if (
-            typeof item === 'object' &&
-            idKey &&
-            props.modelValue &&
-            typeof props.modelValue === 'object'
-          ) {
-            const modelValue = props.modelValue
-            return item[idKey] === modelValue[idKey]
+        if (model) {
+          const index = filtered.value.findIndex((item) => {
+            if (
+              typeof item === 'object' &&
+              idKey &&
+              model &&
+              typeof model === 'object'
+            ) {
+              return item[idKey] === model[idKey]
+            }
+
+            return item === model
+          })
+
+          if (index !== -1) {
+            selected.value = { item: model, index }
           }
-
-          return item === props.modelValue
-        })
-
-        if (index !== -1) {
-          selected.value = { item: props.modelValue, index }
         }
 
         listEl.value && positionTheList(listEl.value)
