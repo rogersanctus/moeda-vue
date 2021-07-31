@@ -4,30 +4,39 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "test": "jest",
+    "test:watch": "jest --watch --detectOpenHandles"
   },
   "dependencies": {
     "vue": "^3.1.5",
     "chart.js": "~3.4.1"
   },
   "devDependencies": {
+    "@types/jest": "^26.0.24",
     "@types/node": "^16.4.1",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
     "@vitejs/plugin-vue": "^1.2.5",
     "@vue/compiler-sfc": "^3.0.5",
+    "@vue/test-utils": "^2.0.0-rc.12",
     "@vuedx/typescript-vetur": "^0.7.4",
+    "cross-fetch": "^3.1.4",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier-vue": "^3.1.0",
     "eslint-plugin-vue": "^7.14.0",
+    "jest": "^26.6.3",
+    "jest-environment-jsdom": "^27.0.6",
     "prettier": "^2.3.2",
     "sass": "^1.35.2",
     "stylelint": "^13.13.1",
     "stylelint-config-prettier": "^8.0.2",
     "stylelint-config-standard": "^22.0.0",
+    "ts-jest": "^26.5.6",
     "typescript": "^4.3.2",
     "vite": "^2.4.3",
+    "vue-jest": "^5.0.0-alpha.10",
     "vue-tsc": "^0.0.24"
   }
 }
