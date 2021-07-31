@@ -11,5 +11,6 @@ module.exports = {
     '^@t/(.*)$': '<rootDir>/types/$1'
   },
   moduleFileExtensions: ['vue', 'js', 'ts', 'json'],
-  testMatch: ['**/__tests__/**/*.spec.ts']
+  testMatch: ['**/__tests__/**/*.spec.ts'],
+  setupFiles: ['./configEnv.ts']
 }
