@@ -1,6 +1,6 @@
 import { TimeSeries, SymbolsResponse } from '@t/timeSeries'
 
-const EXCHANGE_RATE_API = import.meta.env.VITE_EXCHANGE_RATE_API
+const EXCHANGE_RATE_API = process.env.VITE_EXCHANGE_RATE_API
 const TIME_SERIES = 'timeseries'
 const SYMBOLS = 'symbols'
 
