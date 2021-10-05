@@ -26,7 +26,7 @@ Finally, you can run tests with:
 `npm t`
 
 # Contribution
-You can fork this project any time you want and make the changes you need. The code is under [ISC](/../master/LICENSE) license
+You can fork this project any time you want and make the changes you need. The code is under [ISC](/../main/LICENSE) license
 
 # Preview
 The project is running at Netlify on: [Moeda-Vue](https://moeda-vue.netlify.app)
