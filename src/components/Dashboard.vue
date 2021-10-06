@@ -118,17 +118,17 @@ export default defineComponent({
       }
     }
 
-    watch(currency, async (value, old) => {
-      if (value && value.code !== old?.code) {
-        doFetchSeries()
-      }
-    })
+    watch(currency, fetchSeriesWatcher)
+    watch(currencyBaseSymbol, fetchSeriesWatcher)
 
-    watch(currencyBaseSymbol, (value, old) => {
-      if (value && value.code !== old?.code) {
+    function fetchSeriesWatcher(
+      newValue: CurrencySymbol | null,
+      oldValue: CurrencySymbol | null
+    ) {
+      if (newValue && newValue.code !== oldValue?.code) {
         doFetchSeries()
       }
-    })
+    }
 
     async function doFetchSeries() {
       const toDate = new Date()
