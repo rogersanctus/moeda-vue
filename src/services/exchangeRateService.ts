@@ -41,9 +41,7 @@ export async function fetchSymbols(): Promise<SymbolsResponse> {
       method: 'GET'
     })
       .then((resp) => {
-        resp.json().then((data) => {
-          resolve(data)
-        })
+        resp.json().then((data) => resolve(data))
       })
       .catch((error) => reject(error))
   })
@@ -85,9 +83,7 @@ export async function fetchSeries(
       }
     )
       .then((resp) => {
-        resp.json().then((data) => {
-          resolve(data)
-        })
+        resp.json().then((data) => resolve(data))
       })
       .catch((error) => reject(error))
   })
