@@ -155,7 +155,6 @@ export default defineComponent({
             if (
               typeof item === 'object' &&
               idKey &&
-              model &&
               typeof model === 'object'
             ) {
               return item[idKey] === model[idKey]
