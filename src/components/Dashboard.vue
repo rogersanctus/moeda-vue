@@ -22,7 +22,6 @@
             :items="currencySymbols"
             code="code"
             description="description"
-            disabled
           />
         </div>
       </div>
