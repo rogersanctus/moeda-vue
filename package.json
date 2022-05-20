@@ -10,7 +10,7 @@
     "test:watch": "jest --watch --detectOpenHandles"
   },
   "dependencies": {
-    "vue": "^3.1.5",
+    "vue": "^3.2.35",
     "chart.js": "^3.5.1"
   },
   "devDependencies": {
